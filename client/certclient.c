@@ -131,6 +131,10 @@ static int contains_auth_delimiter(const char *value) {
     return strchr(value, ';') != NULL;
 }
 
+static int fits_in_int(size_t value) {
+    return value <= (size_t) INT_MAX;
+}
+
 static int parse_config_file(const char *path, Config *cfg) {
     FILE *fp;
     char line[4096];
@@ -371,10 +375,15 @@ static int write_file(const char *path, const char *data, size_t len) {
 }
 
 static int validate_csr_pem(const char *pem, size_t len) {
-    BIO *bio = BIO_new_mem_buf(pem, (int) len);
+    BIO *bio;
     X509_REQ *req = NULL;
     int ok = -1;
 
+    if (!fits_in_int(len)) {
+        fprintf(stderr, "CSR input is too large\n");
+        return -1;
+    }
+    bio = BIO_new_mem_buf(pem, (int) len);
     if (bio == NULL) {
         return -1;
     }
@@ -390,10 +399,15 @@ static int validate_csr_pem(const char *pem, size_t len) {
 }
 
 static int validate_cert_pem(const char *pem, size_t len) {
-    BIO *bio = BIO_new_mem_buf(pem, (int) len);
+    BIO *bio;
     X509 *cert = NULL;
     int ok = -1;
 
+    if (!fits_in_int(len)) {
+        fprintf(stderr, "Certificate response is too large\n");
+        return -1;
+    }
+    bio = BIO_new_mem_buf(pem, (int) len);
     if (bio == NULL) {
         return -1;
     }
@@ -412,6 +426,10 @@ static char *base64_encode(const unsigned char *data, size_t len) {
     size_t out_len = 4 * ((len + 2) / 3);
     char *out = malloc(out_len + 1);
     if (out == NULL) {
+        return NULL;
+    }
+    if (!fits_in_int(len)) {
+        free(out);
         return NULL;
     }
     if (EVP_EncodeBlock((unsigned char *) out, data, (int) len) < 0) {
@@ -437,6 +455,9 @@ static int base64_decode(const char *text, unsigned char **data, size_t *len) {
     }
 
     input_len = raw_len + ((4 - (raw_len % 4)) % 4);
+    if (!fits_in_int(input_len)) {
+        return -1;
+    }
     normalized = malloc(input_len + 1);
     alloc_len = (input_len / 4) * 3 + 3;
     buf = malloc(alloc_len);
@@ -473,10 +494,16 @@ static int base64_decode(const char *text, unsigned char **data, size_t *len) {
 }
 
 static int derive_device_key(const char *secret, unsigned char *key, size_t key_len) {
+    size_t secret_len = strlen(secret);
+    size_t salt_len = strlen(DEVKEY_SALT);
+
+    if (!fits_in_int(secret_len) || !fits_in_int(salt_len) || !fits_in_int(key_len)) {
+        return -1;
+    }
     if (PKCS5_PBKDF2_HMAC(secret,
-                          (int) strlen(secret),
+                          (int) secret_len,
                           (const unsigned char *) DEVKEY_SALT,
-                          (int) strlen(DEVKEY_SALT),
+                          (int) salt_len,
                           DEVKEY_ITER,
                           EVP_sha256(),
                           (int) key_len,
@@ -624,7 +651,7 @@ static int fetch_session_key(const Config *cfg, Buffer *response) {
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(post_data));
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) strlen(post_data));
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -694,6 +721,7 @@ static int make_auth_header(const Config *cfg,
     char *payload = NULL;
     char *header = NULL;
     size_t payload_len;
+    size_t header_len;
     int ret = -1;
 
     if (RAND_bytes(nonce, sizeof(nonce)) != 1) {
@@ -722,7 +750,8 @@ static int make_auth_header(const Config *cfg,
     strcpy(payload, nonce_b64);
     strcat(payload, body_hash_b64);
 
-    if (HMAC(EVP_sha256(),
+    if (!fits_in_int(key_len) ||
+        HMAC(EVP_sha256(),
              key,
              (int) key_len,
              (const unsigned char *) payload,
@@ -738,26 +767,34 @@ static int make_auth_header(const Config *cfg,
         goto cleanup;
     }
 
-    header = malloc(strlen("Authorization: Arctic-Hmac ") + strlen(cfg->userid) +
-                    strlen(nonce_b64) + strlen(mac_b64) +
-                    (cfg->role ? strlen(cfg->role) + 1 : 0) + 4);
+    if (cfg->role != NULL && cfg->role[0] != '\0') {
+        header_len = strlen("Authorization: Arctic-Hmac ") + strlen(cfg->userid) +
+                     strlen(nonce_b64) + strlen(mac_b64) + strlen(cfg->role) + 5;
+    } else {
+        header_len = strlen("Authorization: Arctic-Hmac ") + strlen(cfg->userid) +
+                     strlen(nonce_b64) + strlen(mac_b64) + 4;
+    }
+
+    header = malloc(header_len);
     if (header == NULL) {
         goto cleanup;
     }
 
     if (cfg->role != NULL && cfg->role[0] != '\0') {
-        sprintf(header,
-                "Authorization: Arctic-Hmac %s;%s;%s;%s",
-                cfg->userid,
-                nonce_b64,
-                mac_b64,
-                cfg->role);
+        snprintf(header,
+                 header_len,
+                 "Authorization: Arctic-Hmac %s;%s;%s;%s",
+                 cfg->userid,
+                 nonce_b64,
+                 mac_b64,
+                 cfg->role);
     } else {
-        sprintf(header,
-                "Authorization: Arctic-Hmac %s;%s;%s",
-                cfg->userid,
-                nonce_b64,
-                mac_b64);
+        snprintf(header,
+                 header_len,
+                 "Authorization: Arctic-Hmac %s;%s;%s",
+                 cfg->userid,
+                 nonce_b64,
+                 mac_b64);
     }
 
     *header_out = header;
@@ -844,7 +881,16 @@ static int request_certificate(const Config *cfg,
     }
 
     if (cfg->days > 0) {
-        const char *sep = strchr(sign_url, '?') == NULL ? "?" : "&";
+        size_t sign_url_len = strlen(sign_url);
+        const char *sep;
+        if (strchr(sign_url, '?') == NULL) {
+            sep = "?";
+        } else if (sign_url_len > 0 &&
+                   (sign_url[sign_url_len - 1] == '?' || sign_url[sign_url_len - 1] == '&')) {
+            sep = "";
+        } else {
+            sep = "&";
+        }
         int needed = snprintf(NULL, 0, "%s%sdays=%ld", sign_url, sep, cfg->days);
         url_with_query = malloc((size_t) needed + 1);
         if (url_with_query == NULL) {
@@ -868,7 +914,7 @@ static int request_certificate(const Config *cfg,
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, csr_body);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) csr_len);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) csr_len);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);

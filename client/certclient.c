@@ -369,28 +369,52 @@ static int read_file(const char *path, Buffer *buf) {
 }
 
 static int write_file(const char *path, const char *data, size_t len) {
-    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    size_t path_len = strlen(path);
+    const char suffix[] = ".tmpXXXXXX";
+    char *tmp_path = malloc(path_len + sizeof(suffix));
+    int fd;
     FILE *fp;
 
+    if (tmp_path == NULL) {
+        return -1;
+    }
+    memcpy(tmp_path, path, path_len);
+    memcpy(tmp_path + path_len, suffix, sizeof(suffix));
+
+    fd = mkstemp(tmp_path);
     if (fd < 0) {
         fprintf(stderr, "Failed to open %s for writing: %s\n", path, strerror(errno));
+        free(tmp_path);
         return -1;
     }
     fp = fdopen(fd, "wb");
     if (fp == NULL) {
         fprintf(stderr, "Failed to open %s for writing: %s\n", path, strerror(errno));
         close(fd);
+        unlink(tmp_path);
+        free(tmp_path);
         return -1;
     }
     if (fwrite(data, 1, len, fp) != len) {
         fprintf(stderr, "Failed to write %s\n", path);
         fclose(fp);
+        unlink(tmp_path);
+        free(tmp_path);
         return -1;
     }
     if (fclose(fp) != 0) {
         fprintf(stderr, "Failed to close %s\n", path);
+        unlink(tmp_path);
+        free(tmp_path);
         return -1;
     }
+    if (rename(tmp_path, path) != 0) {
+        fprintf(stderr, "Failed to move %s into place: %s\n", path, strerror(errno));
+        unlink(tmp_path);
+        free(tmp_path);
+        return -1;
+    }
+    free(tmp_path);
     return 0;
 }
 
@@ -555,6 +579,32 @@ static char *join_url(const char *base, const char *path) {
         strcat(url, path);
     }
     return url;
+}
+
+static char *append_days_query(const char *url, long days) {
+    CURLU *curlu = curl_url();
+    char query[64];
+    char *result = NULL;
+
+    if (curlu == NULL) {
+        return NULL;
+    }
+    if (curl_url_set(curlu, CURLUPART_URL, url, 0) != CURLUE_OK) {
+        goto cleanup;
+    }
+    if (snprintf(query, sizeof(query), "days=%ld", days) < 0) {
+        goto cleanup;
+    }
+    if (curl_url_set(curlu, CURLUPART_QUERY, query, CURLU_APPENDQUERY) != CURLUE_OK) {
+        goto cleanup;
+    }
+    if (curl_url_get(curlu, CURLUPART_URL, &result, 0) != CURLUE_OK) {
+        result = NULL;
+    }
+
+cleanup:
+    curl_url_cleanup(curlu);
+    return result;
 }
 
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
@@ -911,25 +961,10 @@ static int request_certificate(const Config *cfg,
     }
 
     if (cfg->days > 0) {
-        size_t sign_url_len = strlen(sign_url);
-        const char *sep;
-        if (strchr(sign_url, '?') == NULL) {
-            sep = "?";
-        } else if (sign_url_len > 0 &&
-                   (sign_url[sign_url_len - 1] == '?' || sign_url[sign_url_len - 1] == '&')) {
-            sep = "";
-        } else {
-            sep = "&";
-        }
-        int needed = snprintf(NULL, 0, "%s%sdays=%ld", sign_url, sep, cfg->days);
-        if (needed < 0) {
-            goto cleanup;
-        }
-        url_with_query = malloc((size_t) needed + 1);
+        url_with_query = append_days_query(sign_url, cfg->days);
         if (url_with_query == NULL) {
             goto cleanup;
         }
-        snprintf(url_with_query, (size_t) needed + 1, "%s%sdays=%ld", sign_url, sep, cfg->days);
     }
 
     if (make_auth_header(cfg, key, key_len, csr_body, csr_len, &auth_header) != 0) {
@@ -974,7 +1009,7 @@ cleanup:
     curl_easy_cleanup(curl);
     free(sign_url);
     free(auth_header);
-    free(url_with_query);
+    curl_free(url_with_query);
     return ret;
 }
 

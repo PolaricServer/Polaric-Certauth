@@ -11,6 +11,7 @@ It is still a bit work-in-progress.
 ## C client
 
 A simple C client is available in `client/`.
+It is intended to build and run on Linux.
 
 Build it with:
 
@@ -19,7 +20,13 @@ cd client
 make
 ```
 
-The client uses libcurl and OpenSSL. The resulting `certclient` program reads settings from `certclient.ini`, submits a PEM encoded CSR to the authenticated `/cacert/sign` REST endpoint, and writes the returned PEM encoded certificate to the configured output file.
+The client uses libcurl and OpenSSL. On Debian/Ubuntu systems, install the required development packages with:
+
+```sh
+sudo apt-get install libcurl4-openssl-dev libssl-dev
+```
+
+The resulting `certclient` program reads settings from `certclient.ini`, submits a PEM encoded CSR to the authenticated `/cacert/sign` REST endpoint, and writes the returned PEM encoded certificate to the configured output file.
 
 The configuration file supports:
 

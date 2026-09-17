@@ -61,11 +61,16 @@ static int contains_auth_delimiter(const char *value) {
     return strchr(value, ';') != NULL;
 }
 
-void config_init(Config *cfg) {
+int config_init(Config *cfg) {
     memset(cfg, 0, sizeof(*cfg));
     cfg->sign_path = strdup("/cacert/sign");
     cfg->login_path = strdup("/directLogin");
     cfg->days = 0;
+    if (cfg->sign_path == NULL || cfg->login_path == NULL) {
+        config_free(cfg);
+        return -1;
+    }
+    return 0;
 }
 
 void config_free(Config *cfg) {

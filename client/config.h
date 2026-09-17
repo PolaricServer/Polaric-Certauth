@@ -17,7 +17,7 @@ typedef struct {
     int insecure_tls;
 } Config;
 
-void config_init(Config *cfg);
+int config_init(Config *cfg);
 void config_free(Config *cfg);
 int parse_config_file(const char *path, Config *cfg);
 int validate_config(const Config *cfg);

@@ -769,9 +769,8 @@ int main(int argc, char **argv) {
         config_path = argv[1];
     }
 
-    config_init(&cfg);
-
-    if (parse_config_file(config_path, &cfg) != 0 ||
+    if (config_init(&cfg) != 0 ||
+        parse_config_file(config_path, &cfg) != 0 ||
         validate_config(&cfg) != 0) {
         goto cleanup;
     }

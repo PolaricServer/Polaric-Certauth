@@ -61,6 +61,18 @@ static int contains_auth_delimiter(const char *value) {
     return strchr(value, ';') != NULL;
 }
 
+static void wipe_and_free(char *value) {
+    volatile unsigned char *p;
+
+    if (value == NULL) {
+        return;
+    }
+    for (p = (volatile unsigned char *) value; *p != '\0'; ++p) {
+        *p = 0;
+    }
+    free(value);
+}
+
 int config_init(Config *cfg) {
     memset(cfg, 0, sizeof(*cfg));
     cfg->sign_path = strdup("/cacert/sign");
@@ -80,9 +92,9 @@ void config_free(Config *cfg) {
     free(cfg->csr_file);
     free(cfg->cert_file);
     free(cfg->userid);
-    free(cfg->password);
-    free(cfg->session_key);
-    free(cfg->shared_secret);
+    wipe_and_free(cfg->password);
+    wipe_and_free(cfg->session_key);
+    wipe_and_free(cfg->shared_secret);
     free(cfg->role);
     free(cfg->ca_file);
 }

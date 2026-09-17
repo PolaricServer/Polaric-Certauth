@@ -15,6 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define DEVKEY_SALT "*E^o2Zse@!_rQp:kL%{4qL.~!v[n&HS)"
 #define DEVKEY_ITER 16384
@@ -295,6 +299,10 @@ static int validate_config(const Config *cfg) {
         fprintf(stderr, "sign_path must not contain a URL fragment\n");
         return -1;
     }
+    if (cfg->login_path != NULL && strchr(cfg->login_path, '#') != NULL) {
+        fprintf(stderr, "login_path must not contain a URL fragment\n");
+        return -1;
+    }
 
     if (cfg->password != NULL && cfg->password[0] != '\0') {
         auth_modes++;
@@ -361,9 +369,17 @@ static int read_file(const char *path, Buffer *buf) {
 }
 
 static int write_file(const char *path, const char *data, size_t len) {
-    FILE *fp = fopen(path, "wb");
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    FILE *fp;
+
+    if (fd < 0) {
+        fprintf(stderr, "Failed to open %s for writing: %s\n", path, strerror(errno));
+        return -1;
+    }
+    fp = fdopen(fd, "wb");
     if (fp == NULL) {
         fprintf(stderr, "Failed to open %s for writing: %s\n", path, strerror(errno));
+        close(fd);
         return -1;
     }
     if (fwrite(data, 1, len, fp) != len) {

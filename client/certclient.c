@@ -127,6 +127,10 @@ static int contains_ctl_chars(const char *value) {
     return 0;
 }
 
+static int contains_auth_delimiter(const char *value) {
+    return strchr(value, ';') != NULL;
+}
+
 static int parse_config_file(const char *path, Config *cfg) {
     FILE *fp;
     char line[4096];
@@ -267,8 +271,20 @@ static int validate_config(const Config *cfg) {
         fprintf(stderr, "userid contains invalid control characters\n");
         return -1;
     }
+    if (contains_auth_delimiter(cfg->userid)) {
+        fprintf(stderr, "userid must not contain ';'\n");
+        return -1;
+    }
     if (cfg->role != NULL && contains_ctl_chars(cfg->role)) {
         fprintf(stderr, "role contains invalid control characters\n");
+        return -1;
+    }
+    if (cfg->role != NULL && contains_auth_delimiter(cfg->role)) {
+        fprintf(stderr, "role must not contain ';'\n");
+        return -1;
+    }
+    if (cfg->sign_path != NULL && strchr(cfg->sign_path, '#') != NULL) {
+        fprintf(stderr, "sign_path must not contain a URL fragment\n");
         return -1;
     }
 
@@ -407,29 +423,50 @@ static char *base64_encode(const unsigned char *data, size_t len) {
 }
 
 static int base64_decode(const char *text, unsigned char **data, size_t *len) {
-    size_t input_len = strlen(text);
-    size_t alloc_len = (input_len / 4) * 3 + 3;
-    unsigned char *buf = malloc(alloc_len);
+    size_t raw_len = strlen(text);
+    size_t normalized_len = raw_len;
+    size_t input_len;
+    size_t alloc_len = 0;
+    unsigned char *buf = NULL;
+    char *normalized = NULL;
     int out_len;
     int padding = 0;
 
-    if (buf == NULL) {
+    if (raw_len == 0 || raw_len % 4 == 1) {
         return -1;
     }
 
-    if (input_len >= 1 && text[input_len - 1] == '=') {
-        padding++;
-    }
-    if (input_len >= 2 && text[input_len - 2] == '=') {
-        padding++;
-    }
-
-    out_len = EVP_DecodeBlock(buf, (const unsigned char *) text, (int) input_len);
-    if (out_len < 0) {
+    input_len = raw_len + ((4 - (raw_len % 4)) % 4);
+    normalized = malloc(input_len + 1);
+    alloc_len = (input_len / 4) * 3 + 3;
+    buf = malloc(alloc_len);
+    if (normalized == NULL || buf == NULL) {
+        free(normalized);
         free(buf);
         return -1;
     }
 
+    memcpy(normalized, text, normalized_len);
+    while (normalized_len < input_len) {
+        normalized[normalized_len++] = '=';
+    }
+    normalized[input_len] = '\0';
+
+    if (input_len >= 1 && normalized[input_len - 1] == '=') {
+        padding++;
+    }
+    if (input_len >= 2 && normalized[input_len - 2] == '=') {
+        padding++;
+    }
+
+    out_len = EVP_DecodeBlock(buf, (const unsigned char *) normalized, (int) input_len);
+    if (out_len < 0) {
+        free(normalized);
+        free(buf);
+        return -1;
+    }
+
+    free(normalized);
     *data = buf;
     *len = (size_t) out_len - (size_t) padding;
     return 0;

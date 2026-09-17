@@ -27,4 +27,4 @@ The configuration file supports:
 - `csr_file`, `cert_file`
 - `userid`
 - exactly one of `password`, `session_key`, or `shared_secret`
-- optional `days`, `role`, `ca_file`, and `insecure_tls`
+- optional `days`, authorization `role`, `ca_file`, and `insecure_tls`

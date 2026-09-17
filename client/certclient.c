@@ -532,6 +532,15 @@ static char *url_encode(CURL *curl, const char *value) {
     return copy;
 }
 
+static int append_header(struct curl_slist **headers, const char *value) {
+    struct curl_slist *next = curl_slist_append(*headers, value);
+    if (next == NULL) {
+        return -1;
+    }
+    *headers = next;
+    return 0;
+}
+
 static int fetch_session_key(const Config *cfg, Buffer *response) {
     CURL *curl = NULL;
     struct curl_slist *headers = NULL;
@@ -569,8 +578,7 @@ static int fetch_session_key(const Config *cfg, Buffer *response) {
              username,
              password);
 
-    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-    if (headers == NULL) {
+    if (append_header(&headers, "Content-Type: application/x-www-form-urlencoded") != 0) {
         goto cleanup;
     }
 
@@ -812,10 +820,9 @@ static int request_certificate(const Config *cfg,
         goto cleanup;
     }
 
-    headers = curl_slist_append(headers, auth_header);
-    headers = curl_slist_append(headers, "Content-Type: application/x-pem-file");
-    headers = curl_slist_append(headers, "Accept: application/x-pem-file");
-    if (headers == NULL) {
+    if (append_header(&headers, auth_header) != 0 ||
+        append_header(&headers, "Content-Type: application/x-pem-file") != 0 ||
+        append_header(&headers, "Accept: application/x-pem-file") != 0) {
         goto cleanup;
     }
 

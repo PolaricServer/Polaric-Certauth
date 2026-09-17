@@ -36,8 +36,8 @@ By default it reads `./certclient.ini` from the current working directory. For e
 
 The configuration file supports:
 
-- `service_url`, `sign_path`, `login_path`
+- `service_url`, `sign_path`
 - `csr_file`, `cert_file`
 - `userid`
-- exactly one of `password`, `session_key`, or `shared_secret`
+- `shared_secret`
 - optional `days`, authorization `role`, `ca_file`, and `insecure_tls`

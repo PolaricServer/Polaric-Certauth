@@ -23,8 +23,17 @@ typedef struct {
  * config_free after any successful or partial initialization/parsing flow.
  */
 int config_init(Config *cfg);
+/* Release all heap-owned Config members after success or failure. */
 void config_free(Config *cfg);
+/*
+ * Parse path into an initialized Config, returning 0 on success and -1 on error.
+ * The caller still owns the Config and must call config_free even after failure.
+ */
 int parse_config_file(const char *path, Config *cfg);
+/*
+ * Validate an initialized Config, returning 0 on success and -1 on error.
+ * The caller still owns the Config and must call config_free after failure.
+ */
 int validate_config(const Config *cfg);
 
 #endif

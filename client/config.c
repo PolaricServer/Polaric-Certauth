@@ -9,6 +9,8 @@
 #include <string.h>
 #include <strings.h>
 
+
+
 static char *trim(char *s) {
     char *end;
     while (*s != '\0' && isspace((unsigned char) *s)) {
@@ -24,6 +26,8 @@ static char *trim(char *s) {
     return s;
 }
 
+
+
 static void wipe_and_free(char *value);
 
 static int set_config_value(char **field, const char *value) {
@@ -36,6 +40,8 @@ static int set_config_value(char **field, const char *value) {
     return 0;
 }
 
+
+
 static int set_secret_config_value(char **field, const char *value) {
     char *copy = strdup(value);
     if (copy == NULL) {
@@ -45,6 +51,8 @@ static int set_secret_config_value(char **field, const char *value) {
     *field = copy;
     return 0;
 }
+
+
 
 static int parse_bool(const char *value, int *out) {
     if (strcasecmp(value, "true") == 0 || strcmp(value, "1") == 0 ||
@@ -60,6 +68,8 @@ static int parse_bool(const char *value, int *out) {
     return -1;
 }
 
+
+
 static int contains_ctl_chars(const char *value) {
     const unsigned char *p = (const unsigned char *) value;
     while (*p != '\0') {
@@ -71,9 +81,13 @@ static int contains_ctl_chars(const char *value) {
     return 0;
 }
 
+
+
 static int contains_auth_delimiter(const char *value) {
     return strchr(value, ';') != NULL;
 }
+
+
 
 static void wipe_and_free(char *value) {
     volatile unsigned char *p;
@@ -87,6 +101,8 @@ static void wipe_and_free(char *value) {
     free(value);
 }
 
+
+
 int config_init(Config *cfg) {
     memset(cfg, 0, sizeof(*cfg));
     cfg->sign_path = strdup("/cacert/sign");
@@ -97,6 +113,8 @@ int config_init(Config *cfg) {
     }
     return 0;
 }
+
+
 
 void config_free(Config *cfg) {
     free(cfg->service_url);
@@ -118,6 +136,9 @@ void config_free(Config *cfg) {
     cfg->days = 0;
     cfg->insecure_tls = 0;
 }
+
+
+
 
 int parse_config_file(const char *path, Config *cfg) {
     FILE *fp;
@@ -185,11 +206,6 @@ int parse_config_file(const char *path, Config *cfg) {
                 fclose(fp);
                 return -1;
             }
-        } else if (strcmp(key, "role") == 0) {
-            if (set_config_value(&cfg->role, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
         } else if (strcmp(key, "ca_file") == 0) {
             if (set_config_value(&cfg->ca_file, value) != 0) {
                 fclose(fp);
@@ -204,12 +220,6 @@ int parse_config_file(const char *path, Config *cfg) {
                 fclose(fp);
                 return -1;
             }
-        } else if (strcmp(key, "insecure_tls") == 0) {
-            if (parse_bool(value, &cfg->insecure_tls) != 0) {
-                fprintf(stderr, "Invalid insecure_tls value on line %lu\n", lineno);
-                fclose(fp);
-                return -1;
-            }
         } else {
             fprintf(stderr, "Unknown config key '%s' on line %lu\n", key, lineno);
             fclose(fp);
@@ -220,6 +230,8 @@ int parse_config_file(const char *path, Config *cfg) {
     fclose(fp);
     return 0;
 }
+
+
 
 int validate_config(const Config *cfg) {
     if (cfg->service_url == NULL || cfg->service_url[0] == '\0') {
@@ -248,14 +260,6 @@ int validate_config(const Config *cfg) {
     }
     if (contains_auth_delimiter(cfg->userid)) {
         fprintf(stderr, "userid must not contain ';'\n");
-        return -1;
-    }
-    if (cfg->role != NULL && contains_ctl_chars(cfg->role)) {
-        fprintf(stderr, "role contains invalid control characters\n");
-        return -1;
-    }
-    if (cfg->role != NULL && contains_auth_delimiter(cfg->role)) {
-        fprintf(stderr, "role must not contain ';'\n");
         return -1;
     }
     if (cfg->sign_path != NULL && strchr(cfg->sign_path, '#') != NULL) {

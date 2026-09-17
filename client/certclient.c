@@ -539,16 +539,26 @@ static char *join_url(const char *base, const char *path) {
 
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
     Buffer *buf = userdata;
-    size_t chunk = size * nmemb;
-    char *new_data = realloc(buf->data, buf->len + chunk + 1);
+    size_t chunk;
+    size_t new_len;
+    char *new_data;
 
+    if (size != 0 && nmemb > SIZE_MAX / size) {
+        return 0;
+    }
+    chunk = size * nmemb;
+    if (chunk > SIZE_MAX - buf->len - 1) {
+        return 0;
+    }
+    new_len = buf->len + chunk;
+    new_data = realloc(buf->data, new_len + 1);
     if (new_data == NULL) {
         return 0;
     }
 
     buf->data = new_data;
     memcpy(buf->data + buf->len, ptr, chunk);
-    buf->len += chunk;
+    buf->len = new_len;
     buf->data[buf->len] = '\0';
     return chunk;
 }
@@ -892,6 +902,9 @@ static int request_certificate(const Config *cfg,
             sep = "&";
         }
         int needed = snprintf(NULL, 0, "%s%sdays=%ld", sign_url, sep, cfg->days);
+        if (needed < 0) {
+            goto cleanup;
+        }
         url_with_query = malloc((size_t) needed + 1);
         if (url_with_query == NULL) {
             goto cleanup;

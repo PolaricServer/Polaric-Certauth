@@ -17,6 +17,11 @@ typedef struct {
     int insecure_tls;
 } Config;
 
+/*
+ * Initialize a Config before any other config_* call.
+ * String members are heap-owned by the Config and must be released with
+ * config_free after any successful or partial initialization/parsing flow.
+ */
 int config_init(Config *cfg);
 void config_free(Config *cfg);
 int parse_config_file(const char *path, Config *cfg);

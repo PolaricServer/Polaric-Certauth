@@ -19,4 +19,12 @@ cd client
 make
 ```
 
-The resulting `certclient` program reads settings from `certclient.ini`, submits a PEM encoded CSR to the authenticated `/cacert/sign` REST endpoint, and writes the returned PEM encoded certificate to the configured output file.
+The client uses libcurl and OpenSSL. The resulting `certclient` program reads settings from `certclient.ini`, submits a PEM encoded CSR to the authenticated `/cacert/sign` REST endpoint, and writes the returned PEM encoded certificate to the configured output file.
+
+The configuration file supports:
+
+- `service_url`, `sign_path`, `login_path`
+- `csr_file`, `cert_file`
+- `userid`
+- one of `password`, `session_key`, or `shared_secret`
+- optional `days`, `role`, `ca_file`, and `insecure_tls`

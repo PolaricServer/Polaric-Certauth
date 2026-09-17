@@ -259,6 +259,10 @@ static int validate_config(const Config *cfg) {
         fprintf(stderr, "Missing service_url in config\n");
         return -1;
     }
+    if (strchr(cfg->service_url, '#') != NULL) {
+        fprintf(stderr, "service_url must not contain a URL fragment\n");
+        return -1;
+    }
     if (cfg->csr_file == NULL || cfg->csr_file[0] == '\0') {
         fprintf(stderr, "Missing csr_file in config\n");
         return -1;

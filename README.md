@@ -28,7 +28,7 @@ sudo apt-get install libcurl4-openssl-dev libssl-dev
 
 The resulting `certclient` program reads settings from `certclient.ini`, submits a PEM encoded CSR to the authenticated `/cacert/sign` REST endpoint, and writes the returned PEM encoded certificate to the configured output file.
 
-By default it reads `client/certclient.ini`, but you can override that by passing a config file path on the command line:
+By default it reads `./certclient.ini` from the current working directory, so when running from `client/` it uses `client/certclient.ini`. You can override that by passing a config file path on the command line:
 
 ```sh
 ./certclient /path/to/certclient.ini

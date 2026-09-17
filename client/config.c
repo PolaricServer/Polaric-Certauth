@@ -110,7 +110,7 @@ void config_free(Config *cfg) {
     cfg->csr_file = NULL;
     free(cfg->cert_file);
     cfg->cert_file = NULL;
-    free(cfg->userid);
+    wipe_and_free(cfg->userid);
     cfg->userid = NULL;
     wipe_and_free(cfg->password);
     cfg->password = NULL;
@@ -188,7 +188,7 @@ int parse_config_file(const char *path, Config *cfg) {
                 return -1;
             }
         } else if (strcmp(key, "userid") == 0) {
-            if (set_config_value(&cfg->userid, value) != 0) {
+            if (set_secret_config_value(&cfg->userid, value) != 0) {
                 fclose(fp);
                 return -1;
             }

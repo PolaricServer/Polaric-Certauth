@@ -101,16 +101,29 @@ int config_init(Config *cfg) {
 
 void config_free(Config *cfg) {
     free(cfg->service_url);
+    cfg->service_url = NULL;
     free(cfg->sign_path);
+    cfg->sign_path = NULL;
     free(cfg->login_path);
+    cfg->login_path = NULL;
     free(cfg->csr_file);
+    cfg->csr_file = NULL;
     free(cfg->cert_file);
+    cfg->cert_file = NULL;
     free(cfg->userid);
+    cfg->userid = NULL;
     wipe_and_free(cfg->password);
+    cfg->password = NULL;
     wipe_and_free(cfg->session_key);
+    cfg->session_key = NULL;
     wipe_and_free(cfg->shared_secret);
+    cfg->shared_secret = NULL;
     free(cfg->role);
+    cfg->role = NULL;
     free(cfg->ca_file);
+    cfg->ca_file = NULL;
+    cfg->days = 0;
+    cfg->insecure_tls = 0;
 }
 
 int parse_config_file(const char *path, Config *cfg) {

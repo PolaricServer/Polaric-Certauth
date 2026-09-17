@@ -22,12 +22,24 @@ static char *trim(char *s) {
     return s;
 }
 
+static void wipe_and_free(char *value);
+
 static int set_config_value(char **field, const char *value) {
     char *copy = strdup(value);
     if (copy == NULL) {
         return -1;
     }
     free(*field);
+    *field = copy;
+    return 0;
+}
+
+static int set_secret_config_value(char **field, const char *value) {
+    char *copy = strdup(value);
+    if (copy == NULL) {
+        return -1;
+    }
+    wipe_and_free(*field);
     *field = copy;
     return 0;
 }
@@ -166,17 +178,17 @@ int parse_config_file(const char *path, Config *cfg) {
                 return -1;
             }
         } else if (strcmp(key, "password") == 0) {
-            if (set_config_value(&cfg->password, value) != 0) {
+            if (set_secret_config_value(&cfg->password, value) != 0) {
                 fclose(fp);
                 return -1;
             }
         } else if (strcmp(key, "session_key") == 0) {
-            if (set_config_value(&cfg->session_key, value) != 0) {
+            if (set_secret_config_value(&cfg->session_key, value) != 0) {
                 fclose(fp);
                 return -1;
             }
         } else if (strcmp(key, "shared_secret") == 0) {
-            if (set_config_value(&cfg->shared_secret, value) != 0) {
+            if (set_secret_config_value(&cfg->shared_secret, value) != 0) {
                 fclose(fp);
                 return -1;
             }

@@ -579,16 +579,25 @@ cleanup:
 
 static int sha256_base64(const char *body, size_t len, char **digest_b64) {
     unsigned char digest[SHA256_DIGEST_LENGTH];
-    SHA256_CTX ctx;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = -1;
 
-    if (SHA256_Init(&ctx) != 1 ||
-        SHA256_Update(&ctx, body, len) != 1 ||
-        SHA256_Final(digest, &ctx) != 1) {
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL) {
         return -1;
+    }
+    if (EVP_DigestInit_ex(ctx, EVP_sha256(), NULL) != 1 ||
+        EVP_DigestUpdate(ctx, body, len) != 1 ||
+        EVP_DigestFinal_ex(ctx, digest, NULL) != 1) {
+        goto cleanup;
     }
 
     *digest_b64 = base64_encode(digest, sizeof(digest));
-    return *digest_b64 == NULL ? -1 : 0;
+    ret = *digest_b64 == NULL ? -1 : 0;
+
+cleanup:
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 static int make_auth_header(const Config *cfg,

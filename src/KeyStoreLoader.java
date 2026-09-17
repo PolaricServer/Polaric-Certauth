@@ -88,9 +88,9 @@ public class KeyStoreLoader {
         else 
             keyStore.load(null, this.keystorePassword.toCharArray());
     
-        /* Generate EC Key Pair using the NIST P-256 (secp256r1) curve */
+        /* Generate EC Key Pair using the NIST P-384 (secp384r1) curve */
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "BC");
-        keyGen.initialize(new ECGenParameterSpec("secp256r1"), new SecureRandom());
+        keyGen.initialize(new ECGenParameterSpec("secp384r1"), new SecureRandom());
         KeyPair caKeyPair = keyGen.generateKeyPair();
 
         // 4. Define validity timeline (10 years)

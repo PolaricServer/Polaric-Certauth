@@ -9,7 +9,6 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -43,21 +42,6 @@ static char *xstrdup(const char *value) {
         exit(EXIT_FAILURE);
     }
     return copy;
-}
-
-static char *trim(char *s) {
-    char *end;
-    while (*s != '\0' && isspace((unsigned char)*s)) {
-        s++;
-    }
-    if (*s == '\0') {
-        return s;
-    }
-    end = s + strlen(s) - 1;
-    while (end > s && isspace((unsigned char)*end)) {
-        *end-- = '\0';
-    }
-    return s;
 }
 
 static int fits_in_int(size_t value) {
@@ -223,59 +207,6 @@ static char *base64_encode(const unsigned char *data, size_t len) {
     return out;
 }
 
-static int base64_decode(const char *text, unsigned char **data, size_t *len) {
-    size_t raw_len = strlen(text);
-    size_t normalized_len = raw_len;
-    size_t input_len;
-    size_t alloc_len = 0;
-    unsigned char *buf = NULL;
-    char *normalized = NULL;
-    int out_len;
-    int padding = 0;
-
-    if (raw_len == 0 || raw_len % 4 == 1) {
-        return -1;
-    }
-
-    input_len = raw_len + ((4 - (raw_len % 4)) % 4);
-    if (!fits_in_int(input_len)) {
-        return -1;
-    }
-    normalized = malloc(input_len + 1);
-    alloc_len = (input_len / 4) * 3 + 3;
-    buf = malloc(alloc_len);
-    if (normalized == NULL || buf == NULL) {
-        free(normalized);
-        free(buf);
-        return -1;
-    }
-
-    memcpy(normalized, text, normalized_len);
-    while (normalized_len < input_len) {
-        normalized[normalized_len++] = '=';
-    }
-    normalized[input_len] = '\0';
-
-    if (input_len >= 1 && normalized[input_len - 1] == '=') {
-        padding++;
-    }
-    if (input_len >= 2 && normalized[input_len - 2] == '=') {
-        padding++;
-    }
-
-    out_len = EVP_DecodeBlock(buf, (const unsigned char *) normalized, (int) input_len);
-    if (out_len < 0) {
-        free(normalized);
-        free(buf);
-        return -1;
-    }
-
-    free(normalized);
-    *data = buf;
-    *len = (size_t) out_len - (size_t) padding;
-    return 0;
-}
-
 static int derive_device_key(const char *secret, unsigned char *key, size_t key_len) {
     size_t secret_len = strlen(secret);
     size_t salt_len = strlen(DEVKEY_SALT);
@@ -383,38 +314,6 @@ static int apply_tls_options(CURL *curl, const Config *cfg) {
     return 0;
 }
 
-static char *trimmed_copy(const Buffer *buf) {
-    char *copy;
-    char *start;
-    char *end;
-
-    if (buf->data == NULL) {
-        return NULL;
-    }
-
-    copy = xstrdup(buf->data);
-    start = trim(copy);
-    if (start != copy) {
-        memmove(copy, start, strlen(start) + 1);
-    }
-    end = copy + strlen(copy);
-    while (end > copy && isspace((unsigned char) end[-1])) {
-        *--end = '\0';
-    }
-    return copy;
-}
-
-static char *url_encode(CURL *curl, const char *value) {
-    char *encoded = curl_easy_escape(curl, value, 0);
-    char *copy;
-    if (encoded == NULL) {
-        return NULL;
-    }
-    copy = xstrdup(encoded);
-    curl_free(encoded);
-    return copy;
-}
-
 static int append_header(struct curl_slist **headers, const char *value) {
     struct curl_slist *next = curl_slist_append(*headers, value);
     if (next == NULL) {
@@ -422,84 +321,6 @@ static int append_header(struct curl_slist **headers, const char *value) {
     }
     *headers = next;
     return 0;
-}
-
-static int fetch_session_key(const Config *cfg, Buffer *response) {
-    CURL *curl = NULL;
-    struct curl_slist *headers = NULL;
-    char *login_url = NULL;
-    char *username = NULL;
-    char *password = NULL;
-    char *post_data = NULL;
-    long status = 0;
-    CURLcode rc;
-    int ret = -1;
-
-    if (cfg->password == NULL || cfg->password[0] == '\0') {
-        return -1;
-    }
-
-    curl = curl_easy_init();
-    if (curl == NULL) {
-        return -1;
-    }
-
-    login_url = join_url(cfg->service_url, cfg->login_path);
-    username = url_encode(curl, cfg->userid);
-    password = url_encode(curl, cfg->password);
-    if (login_url == NULL || username == NULL || password == NULL) {
-        goto cleanup;
-    }
-
-    post_data = malloc(strlen(username) + strlen(password) + 32);
-    if (post_data == NULL) {
-        goto cleanup;
-    }
-    snprintf(post_data,
-             strlen(username) + strlen(password) + 32,
-             "username=%s&" "pass" "word=%s",
-             username,
-             password);
-
-    if (append_header(&headers, "Content-Type: application/x-www-form-urlencoded") != 0) {
-        goto cleanup;
-    }
-
-    memset(response, 0, sizeof(*response));
-    curl_easy_setopt(curl, CURLOPT_URL, login_url);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) strlen(post_data));
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    apply_tls_options(curl, cfg);
-
-    rc = curl_easy_perform(curl);
-    if (rc != CURLE_OK) {
-        fprintf(stderr, "Login request failed: %s\n", curl_easy_strerror(rc));
-        goto cleanup;
-    }
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-    if (status != 200) {
-        fprintf(stderr, "Login failed with HTTP %ld\n", status);
-        if (response->data != NULL && response->len > 0) {
-            fprintf(stderr, "%s\n", response->data);
-        }
-        goto cleanup;
-    }
-
-    ret = 0;
-
-cleanup:
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-    free(login_url);
-    free(username);
-    free(password);
-    free(post_data);
-    return ret;
 }
 
 static int sha256_base64(const char *body, size_t len, char **digest_b64) {
@@ -630,48 +451,23 @@ cleanup:
 }
 
 static int obtain_auth_key(const Config *cfg, unsigned char **key, size_t *key_len) {
-    Buffer login_response;
-    char *session_key = NULL;
-    int ret = -1;
-
-    memset(&login_response, 0, sizeof(login_response));
-
-    if (cfg->session_key != NULL && cfg->session_key[0] != '\0') {
-        session_key = xstrdup(cfg->session_key);
-    } else if (cfg->shared_secret != NULL && cfg->shared_secret[0] != '\0') {
-        *key = malloc(HMAC_KEY_LEN);
-        if (*key == NULL) {
-            return -1;
-        }
-        if (derive_device_key(cfg->shared_secret, *key, HMAC_KEY_LEN) != 0) {
-            fprintf(stderr, "Failed to derive device key\n");
-            free(*key);
-            *key = NULL;
-            return -1;
-        }
-        *key_len = HMAC_KEY_LEN;
-        return 0;
-    } else {
-        if (fetch_session_key(cfg, &login_response) != 0) {
-            goto cleanup;
-        }
-        session_key = trimmed_copy(&login_response);
-        if (session_key == NULL || session_key[0] == '\0') {
-            fprintf(stderr, "Login response did not contain a session key\n");
-            goto cleanup;
-        }
+    if (cfg->shared_secret == NULL || cfg->shared_secret[0] == '\0') {
+        fprintf(stderr, "Missing shared_secret in config\n");
+        return -1;
     }
 
-    if (base64_decode(session_key, key, key_len) != 0) {
-        fprintf(stderr, "Failed to decode session key\n");
-        goto cleanup;
+    *key = malloc(HMAC_KEY_LEN);
+    if (*key == NULL) {
+        return -1;
     }
-    ret = 0;
-
-cleanup:
-    free(session_key);
-    buffer_free(&login_response);
-    return ret;
+    if (derive_device_key(cfg->shared_secret, *key, HMAC_KEY_LEN) != 0) {
+        fprintf(stderr, "Failed to derive device key\n");
+        free(*key);
+        *key = NULL;
+        return -1;
+    }
+    *key_len = HMAC_KEY_LEN;
+    return 0;
 }
 
 static int request_certificate(const Config *cfg,

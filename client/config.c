@@ -90,9 +90,8 @@ static void wipe_and_free(char *value) {
 int config_init(Config *cfg) {
     memset(cfg, 0, sizeof(*cfg));
     cfg->sign_path = strdup("/cacert/sign");
-    cfg->login_path = strdup("/directLogin");
     cfg->days = 0;
-    if (cfg->sign_path == NULL || cfg->login_path == NULL) {
+    if (cfg->sign_path == NULL) {
         config_free(cfg);
         return -1;
     }
@@ -104,18 +103,12 @@ void config_free(Config *cfg) {
     cfg->service_url = NULL;
     free(cfg->sign_path);
     cfg->sign_path = NULL;
-    free(cfg->login_path);
-    cfg->login_path = NULL;
     free(cfg->csr_file);
     cfg->csr_file = NULL;
     free(cfg->cert_file);
     cfg->cert_file = NULL;
     wipe_and_free(cfg->userid);
     cfg->userid = NULL;
-    wipe_and_free(cfg->password);
-    cfg->password = NULL;
-    wipe_and_free(cfg->session_key);
-    cfg->session_key = NULL;
     wipe_and_free(cfg->shared_secret);
     cfg->shared_secret = NULL;
     free(cfg->role);
@@ -172,11 +165,6 @@ int parse_config_file(const char *path, Config *cfg) {
                 fclose(fp);
                 return -1;
             }
-        } else if (strcmp(key, "login_path") == 0) {
-            if (set_config_value(&cfg->login_path, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
         } else if (strcmp(key, "csr_file") == 0) {
             if (set_config_value(&cfg->csr_file, value) != 0) {
                 fclose(fp);
@@ -189,16 +177,6 @@ int parse_config_file(const char *path, Config *cfg) {
             }
         } else if (strcmp(key, "userid") == 0) {
             if (set_secret_config_value(&cfg->userid, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
-        } else if (strcmp(key, "password") == 0) {
-            if (set_secret_config_value(&cfg->password, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
-        } else if (strcmp(key, "session_key") == 0) {
-            if (set_secret_config_value(&cfg->session_key, value) != 0) {
                 fclose(fp);
                 return -1;
             }
@@ -244,8 +222,6 @@ int parse_config_file(const char *path, Config *cfg) {
 }
 
 int validate_config(const Config *cfg) {
-    int auth_modes = 0;
-
     if (cfg->service_url == NULL || cfg->service_url[0] == '\0') {
         fprintf(stderr, "Missing service_url in config\n");
         return -1;
@@ -286,27 +262,8 @@ int validate_config(const Config *cfg) {
         fprintf(stderr, "sign_path must not contain a URL fragment\n");
         return -1;
     }
-    if (cfg->login_path != NULL && strchr(cfg->login_path, '#') != NULL) {
-        fprintf(stderr, "login_path must not contain a URL fragment\n");
-        return -1;
-    }
-
-    if (cfg->password != NULL && cfg->password[0] != '\0') {
-        auth_modes++;
-    }
-    if (cfg->session_key != NULL && cfg->session_key[0] != '\0') {
-        auth_modes++;
-    }
-    if (cfg->shared_secret != NULL && cfg->shared_secret[0] != '\0') {
-        auth_modes++;
-    }
-
-    if (auth_modes == 0) {
-        fprintf(stderr, "Configure exactly one of password, session_key, or shared_secret\n");
-        return -1;
-    }
-    if (auth_modes > 1) {
-        fprintf(stderr, "Only one of password, session_key, or shared_secret may be configured\n");
+    if (cfg->shared_secret == NULL || cfg->shared_secret[0] == '\0') {
+        fprintf(stderr, "Missing shared_secret in config\n");
         return -1;
     }
     return 0;

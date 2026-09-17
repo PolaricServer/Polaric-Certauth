@@ -116,6 +116,17 @@ static int parse_bool(const char *value, int *out) {
     return -1;
 }
 
+static int contains_ctl_chars(const char *value) {
+    const unsigned char *p = (const unsigned char *) value;
+    while (*p != '\0') {
+        if (*p < 32 || *p == 127) {
+            return 1;
+        }
+        p++;
+    }
+    return 0;
+}
+
 static int parse_config_file(const char *path, Config *cfg) {
     FILE *fp;
     char line[4096];
@@ -234,6 +245,8 @@ static int parse_config_file(const char *path, Config *cfg) {
 }
 
 static int validate_config(const Config *cfg) {
+    int auth_modes = 0;
+
     if (cfg->service_url == NULL || cfg->service_url[0] == '\0') {
         fprintf(stderr, "Missing service_url in config\n");
         return -1;
@@ -250,10 +263,31 @@ static int validate_config(const Config *cfg) {
         fprintf(stderr, "Missing userid in config\n");
         return -1;
     }
-    if ((cfg->password == NULL || cfg->password[0] == '\0') &&
-        (cfg->session_key == NULL || cfg->session_key[0] == '\0') &&
-        (cfg->shared_secret == NULL || cfg->shared_secret[0] == '\0')) {
-        fprintf(stderr, "Configure one of password, session_key, or shared_secret\n");
+    if (contains_ctl_chars(cfg->userid)) {
+        fprintf(stderr, "userid contains invalid control characters\n");
+        return -1;
+    }
+    if (cfg->role != NULL && contains_ctl_chars(cfg->role)) {
+        fprintf(stderr, "role contains invalid control characters\n");
+        return -1;
+    }
+
+    if (cfg->password != NULL && cfg->password[0] != '\0') {
+        auth_modes++;
+    }
+    if (cfg->session_key != NULL && cfg->session_key[0] != '\0') {
+        auth_modes++;
+    }
+    if (cfg->shared_secret != NULL && cfg->shared_secret[0] != '\0') {
+        auth_modes++;
+    }
+
+    if (auth_modes == 0) {
+        fprintf(stderr, "Configure exactly one of password, session_key, or shared_secret\n");
+        return -1;
+    }
+    if (auth_modes > 1) {
+        fprintf(stderr, "Only one of password, session_key, or shared_secret may be configured\n");
         return -1;
     }
     return 0;
@@ -765,12 +799,13 @@ static int request_certificate(const Config *cfg,
     }
 
     if (cfg->days > 0) {
-        int needed = snprintf(NULL, 0, "%s?days=%ld", sign_url, cfg->days);
+        const char *sep = strchr(sign_url, '?') == NULL ? "?" : "&";
+        int needed = snprintf(NULL, 0, "%s%sdays=%ld", sign_url, sep, cfg->days);
         url_with_query = malloc((size_t) needed + 1);
         if (url_with_query == NULL) {
             goto cleanup;
         }
-        sprintf(url_with_query, "%s?days=%ld", sign_url, cfg->days);
+        snprintf(url_with_query, (size_t) needed + 1, "%s%sdays=%ld", sign_url, sep, cfg->days);
     }
 
     if (make_auth_header(cfg, key, key_len, csr_body, csr_len, &auth_header) != 0) {

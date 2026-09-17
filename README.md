@@ -26,5 +26,5 @@ The configuration file supports:
 - `service_url`, `sign_path`, `login_path`
 - `csr_file`, `cert_file`
 - `userid`
-- one of `password`, `session_key`, or `shared_secret`
+- exactly one of `password`, `session_key`, or `shared_secret`
 - optional `days`, `role`, `ca_file`, and `insecure_tls`

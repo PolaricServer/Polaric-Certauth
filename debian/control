@@ -4,10 +4,10 @@ Priority: optional
 Maintainer: Øyvind Hanssen <ohanssen@acm.org>
 Build-Depends:
  debhelper-compat (= 13),
- default-jdk,
  libcurl4-openssl-dev,
  libssl-dev,
  maven,
+ openjdk-21-jdk,
  pkgconf
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
@@ -17,7 +17,7 @@ Package: polaric-certauth-server
 Architecture: all
 Depends:
  ${misc:Depends},
- default-jre-headless | java21-runtime-headless
+ openjdk-21-jre-headless | java21-runtime-headless
 Description: Minimal CA REST server for Polaric devices
  Polaric-Certauth provides a small certificate authority service that signs
  certificate requests from devices through a REST API.

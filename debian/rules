@@ -1,0 +1,30 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+MVN := mvn --batch-mode -Dstyle.color=never
+SERVER_VERSION := $(shell awk -F'[<>]' '/<version>/{print $$3; exit}' pom.xml)
+SERVER_JAR := target/polaric-certauth-$(SERVER_VERSION).jar
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MVN) dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
+	$(MAKE) -C client
+
+override_dh_auto_install:
+	test -n "$(SERVER_JAR)" -a -f "$(SERVER_JAR)" || (echo "Expected server jar was not built" >&2; exit 1)
+	install -D -m 0644 $(SERVER_JAR) debian/polaric-certauth-server/usr/share/polaric-certauth-server/polaric-certauth.jar
+	install -d debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib
+	cp -a target/lib/. debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib/
+	install -D -m 0755 debian/polaric-certauth-server.wrapper debian/polaric-certauth-server/usr/bin/polaric-certauth-server
+	install -D -m 0755 debian/polaric-certauth-ca-shell.wrapper debian/polaric-certauth-server/usr/bin/polaric-certauth-ca-shell
+	install -D -m 0644 debian/server.ini debian/polaric-certauth-server/etc/polaric-certauth/server.ini
+	install -D -m 0755 client/certclient debian/polaric-certauth-client/usr/lib/polaric-certauth/certclient
+	install -D -m 0755 debian/polaric-certauth-client.wrapper debian/polaric-certauth-client/usr/bin/polaric-certauth-client
+	install -D -m 0644 debian/client.ini debian/polaric-certauth-client/etc/polaric-certauth/client.ini
+
+override_dh_auto_clean:
+	$(MVN) clean
+	$(MAKE) -C client clean
+	dh_auto_clean

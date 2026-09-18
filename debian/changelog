@@ -1,0 +1,5 @@
+polaric-certauth (1.0-1) unstable; urgency=medium
+
+  * Add Debian packaging for server and client packages.
+
+ -- Øyvind Hanssen <ohanssen@acm.org>  Fri, 18 Sep 2026 09:00:00 +0000

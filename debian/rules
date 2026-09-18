@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	mvn clean dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
+	$(MAKE) -C client
+
+override_dh_auto_clean:
+	mvn clean
+	$(MAKE) -C client clean
+	dh_auto_clean

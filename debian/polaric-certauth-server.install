@@ -1,0 +1,5 @@
+target/polaric-certauth-1.0.jar usr/share/polaric-certauth-server/
+target/lib/*.jar usr/share/polaric-certauth-server/lib/
+debian/polaric-certauth-server.wrapper usr/bin/polaric-certauth-server
+debian/polaric-certauth-ca-shell.wrapper usr/bin/polaric-certauth-ca-shell
+debian/server.ini etc/polaric-certauth/

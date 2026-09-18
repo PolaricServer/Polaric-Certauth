@@ -41,3 +41,22 @@ The configuration file supports:
 - `userid`
 - `shared_secret`
 - optional `days`, authorization `role`, `ca_file`, and `insecure_tls`
+
+## Debian packaging
+
+This repository includes Debian packaging metadata for two binary packages:
+
+- `polaric-certauth-server`
+- `polaric-certauth-client`
+
+Build them from the repository root with:
+
+```sh
+dpkg-buildpackage -us -uc -b
+```
+
+The server package installs the Java application and helper shell together
+with `/etc/polaric-certauth/server.ini`.
+
+The client package installs a wrapper command named
+`polaric-certauth-client` together with `/etc/polaric-certauth/client.ini`.

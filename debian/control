@@ -14,7 +14,7 @@ Rules-Requires-Root: no
 Homepage: https://github.com/PolaricServer/Polaric-Certauth
 
 Package: polaric-certauth-server
-Architecture: all
+Architecture: any
 Depends:
  ${misc:Depends},
  openjdk-21-jre-headless | java21-runtime-headless

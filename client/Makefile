@@ -10,7 +10,7 @@ CPPFLAGS += $(OPENSSL_CFLAGS) $(CURL_CFLAGS)
 LDLIBS += $(OPENSSL_LIBS) $(CURL_LIBS)
 
 TARGET = certclient
-SOURCES = certclient.c config.c
+SOURCES = certclient.c config.c auth.c
 OBJECTS = $(SOURCES:.c=.o)
 
 .PHONY: all clean

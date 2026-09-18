@@ -17,6 +17,17 @@ override_dh_auto_build:
 	mvn clean dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
 	$(MAKE) -C client
 
+override_dh_auto_install:
+	install -D -m 0644 target/polaric-certauth-1.0.jar debian/polaric-certauth-server/usr/share/polaric-certauth-server/polaric-certauth-1.0.jar
+	install -d debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib
+	cp -a target/lib/. debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib/
+	install -D -m 0755 debian/polaric-certauth-server.wrapper debian/polaric-certauth-server/usr/bin/polaric-certauth-server
+	install -D -m 0755 debian/polaric-certauth-ca-shell.wrapper debian/polaric-certauth-server/usr/bin/polaric-certauth-ca-shell
+	install -D -m 0644 debian/server.ini debian/polaric-certauth-server/etc/polaric-certauth/server.ini
+	install -D -m 0755 client/certclient debian/polaric-certauth-client/usr/lib/polaric-certauth/certclient
+	install -D -m 0755 debian/polaric-certauth-client.wrapper debian/polaric-certauth-client/usr/bin/polaric-certauth-client
+	install -D -m 0644 debian/client.ini debian/polaric-certauth-client/etc/polaric-certauth/client.ini
+
 override_dh_auto_clean:
 	mvn clean
 	$(MAKE) -C client clean

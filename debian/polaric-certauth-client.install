@@ -1,3 +1,0 @@
-client/certclient usr/lib/polaric-certauth
-debian/polaric-certauth-client usr/bin
-debian/client.ini etc/polaric-certauth

@@ -1,13 +1,15 @@
 #!/usr/bin/make -f
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-SERVER_JAR := $(firstword $(wildcard target/polaric-certauth-*.jar))
+MVN := mvn --batch-mode -Dstyle.color=never
+SERVER_VERSION := $(shell awk -F'[<>]' '/<version>/{print $$3; exit}' pom.xml)
+SERVER_JAR := target/polaric-certauth-$(SERVER_VERSION).jar
 
 %:
 	dh $@
 
 override_dh_auto_build:
-	mvn dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
+	$(MVN) dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
 	$(MAKE) -C client
 
 override_dh_auto_install:
@@ -23,6 +25,6 @@ override_dh_auto_install:
 	install -D -m 0644 debian/client.ini debian/polaric-certauth-client/etc/polaric-certauth/client.ini
 
 override_dh_auto_clean:
-	mvn clean
+	$(MVN) clean
 	$(MAKE) -C client clean
 	dh_auto_clean

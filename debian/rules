@@ -1,6 +1,14 @@
 #!/usr/bin/make -f
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+JAVA_21_BIN := $(shell update-alternatives --list javac 2>/dev/null | grep -E '/(java|temurin)-21-' | head -n1)
+
+ifeq ($(JAVA_21_BIN),)
+$(error Could not locate a Java 21 javac alternative)
+endif
+
+export JAVA_HOME := $(shell dirname $$(dirname $(JAVA_21_BIN)))
+export PATH := $(JAVA_HOME)/bin:$(PATH)
 
 %:
 	dh $@

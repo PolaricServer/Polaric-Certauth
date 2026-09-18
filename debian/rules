@@ -7,10 +7,11 @@ SERVER_JAR := $(firstword $(wildcard target/polaric-certauth-*.jar))
 	dh $@
 
 override_dh_auto_build:
-	mvn clean dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
+	mvn dependency:copy-dependencies -DoutputDirectory=target/lib -DincludeScope=runtime package
 	$(MAKE) -C client
 
 override_dh_auto_install:
+	test -n "$(SERVER_JAR)" -a -f "$(SERVER_JAR)" || (echo "Expected server jar was not built" >&2; exit 1)
 	install -D -m 0644 $(SERVER_JAR) debian/polaric-certauth-server/usr/share/polaric-certauth-server/polaric-certauth.jar
 	install -d debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib
 	cp -a target/lib/. debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib/

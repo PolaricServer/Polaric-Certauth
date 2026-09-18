@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -eq 0 ]; then
+    set -- /etc/polaric-certauth/client.ini
+fi
+
+exec /usr/lib/polaric-certauth/certclient "$@"

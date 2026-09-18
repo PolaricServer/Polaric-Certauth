@@ -18,11 +18,6 @@
 package no.polaric.cert;
 import no.polaric.core.*;
 import no.polaric.core.httpd.*;
-import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
-import org.pac4j.core.config.Config;
-import org.pac4j.javalin.*;
-import java.util.*;
 
 /**
  * Configuration of the HTTP server. 
@@ -32,19 +27,10 @@ public class MyWebServer extends WebServer {
     public MyWebServer(ServerConfig conf, int port) {
         super(conf, port, "notify", "/", "./doc" );
     }
-    
-    
-    @Override
-    protected void setupRoutes() {
-        /* Start Test REST API */
-        CertApi a1 = new CertApi(_conf);
-        a1.start();
-    }
-    
-    
-    
     public void start() {
         super.start(); 
+        CertApi a1 = new CertApi(_conf);
+        a1.start();
         
         /* 
          * Handlers for login and logout. Here we just print message. 
@@ -64,5 +50,3 @@ public class MyWebServer extends WebServer {
     }
     
 }
-
-

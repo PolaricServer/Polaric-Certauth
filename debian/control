@@ -1,0 +1,39 @@
+Source: polaric-certauth
+Section: net
+Priority: optional
+Maintainer: Øyvind Hanssen <ohanssen@acm.org>
+Build-Depends:
+ debhelper-compat (= 13),
+ libcurl4-openssl-dev,
+ libssl-dev,
+ maven,
+ openjdk-21-jdk,
+ pkgconf
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/PolaricServer/Polaric-Certauth
+
+Package: polaric-certauth-server
+Architecture: all
+Depends:
+ ${misc:Depends},
+ openjdk-21-jre-headless | java21-runtime-headless
+Description: Minimal CA REST server for Polaric devices
+ Polaric-Certauth provides a small certificate authority service that signs
+ certificate requests from devices through a REST API.
+ .
+ This package installs the Java server application, its helper shell, and a
+ sample server configuration under /etc/polaric-certauth/server.ini.
+
+Package: polaric-certauth-client
+Architecture: any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends}
+Description: Certificate request client for Polaric-Certauth
+ The Polaric-Certauth client submits PEM encoded certificate signing requests
+ to a Polaric-Certauth server and stores the returned PEM encoded
+ certificate.
+ .
+ This package installs the client binary and a sample client configuration
+ under /etc/polaric-certauth/client.ini.

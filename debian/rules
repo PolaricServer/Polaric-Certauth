@@ -1,14 +1,6 @@
 #!/usr/bin/make -f
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-JAVA_21_BIN := $(shell update-alternatives --list javac 2>/dev/null | grep -E '/(java|temurin)-21-' | head -n1)
-
-ifeq ($(JAVA_21_BIN),)
-$(error Could not locate a Java 21 javac alternative)
-endif
-
-export JAVA_HOME := $(shell dirname $$(dirname $(JAVA_21_BIN)))
-export PATH := $(JAVA_HOME)/bin:$(PATH)
 
 %:
 	dh $@
@@ -18,7 +10,7 @@ override_dh_auto_build:
 	$(MAKE) -C client
 
 override_dh_auto_install:
-	install -D -m 0644 target/polaric-certauth-1.0.jar debian/polaric-certauth-server/usr/share/polaric-certauth-server/polaric-certauth-1.0.jar
+	install -D -m 0644 target/polaric-certauth-1.0.jar debian/polaric-certauth-server/usr/share/polaric-certauth-server/polaric-certauth.jar
 	install -d debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib
 	cp -a target/lib/. debian/polaric-certauth-server/usr/share/polaric-certauth-server/lib/
 	install -D -m 0755 debian/polaric-certauth-server.wrapper debian/polaric-certauth-server/usr/bin/polaric-certauth-server

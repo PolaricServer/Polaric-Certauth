@@ -28,9 +28,9 @@ public class MyWebServer extends WebServer {
         super(conf, port, "notify", "/", "./doc" );
     }
     public void start() {
+        super.start(); 
         CertApi a1 = new CertApi(_conf);
         a1.start();
-        super.start(); 
         
         /* 
          * Handlers for login and logout. Here we just print message. 
@@ -50,4 +50,3 @@ public class MyWebServer extends WebServer {
     }
     
 }
-

@@ -53,7 +53,7 @@ public class Main extends ConfigBase implements ServerConfig {
             
             String KEYSTORE_PATH = getProperty("cacert.keystore", "keystore.p12");
             String KEYSTORE_PASSWORD = getProperty("cacert.keystore.pw", "1234");
-            CA_ALIAS = getProperty("cacert.alias", "test_ca");
+            CA_ALIAS = getProperty("cacert.alias", "polaric_ca");
             CA_ISSUER = getProperty("cacert.issuer", "CN=test ca");
             boolean logon = getBoolProperty("cacert.log.on", false);
             String logfn = getProperty("cacert.log.file", "ca.log");

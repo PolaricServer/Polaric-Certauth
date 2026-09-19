@@ -1,8 +1,0 @@
-#!/bin/sh
-set -eu
-
-if [ "$#" -eq 0 ]; then
-    set -- /etc/polaric-certauth/server.ini
-fi
-
-exec java -cp /usr/share/polaric-certauth-server/polaric-certauth.jar:/usr/share/polaric-certauth-server/lib/* no.polaric.cert.CaShell "$@"

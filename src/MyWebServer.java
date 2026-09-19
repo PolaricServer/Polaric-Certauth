@@ -25,7 +25,7 @@ import no.polaric.core.httpd.*;
 public class MyWebServer extends WebServer {
     
     public MyWebServer(ServerConfig conf, int port) {
-        super(conf, port, "notify", "/", "./doc" );
+        super(conf, port, "notify", null, null );
     }
     public void start() {
         super.start(); 

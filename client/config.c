@@ -121,20 +121,13 @@ void config_free(Config *cfg) {
     cfg->service_url = NULL;
     free(cfg->sign_path);
     cfg->sign_path = NULL;
-    free(cfg->csr_file);
-    cfg->csr_file = NULL;
-    free(cfg->cert_file);
-    cfg->cert_file = NULL;
     wipe_and_free(cfg->userid);
     cfg->userid = NULL;
     wipe_and_free(cfg->shared_secret);
     cfg->shared_secret = NULL;
     free(cfg->role);
     cfg->role = NULL;
-    free(cfg->ca_file);
-    cfg->ca_file = NULL;
     cfg->days = 0;
-    cfg->insecure_tls = 0;
 }
 
 
@@ -186,16 +179,6 @@ int parse_config_file(const char *path, Config *cfg) {
                 fclose(fp);
                 return -1;
             }
-        } else if (strcmp(key, "csr_file") == 0) {
-            if (set_config_value(&cfg->csr_file, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
-        } else if (strcmp(key, "cert_file") == 0) {
-            if (set_config_value(&cfg->cert_file, value) != 0) {
-                fclose(fp);
-                return -1;
-            }
         } else if (strcmp(key, "userid") == 0) {
             if (set_secret_config_value(&cfg->userid, value) != 0) {
                 fclose(fp);
@@ -240,14 +223,6 @@ int validate_config(const Config *cfg) {
     }
     if (strchr(cfg->service_url, '#') != NULL) {
         fprintf(stderr, "service_url must not contain a URL fragment\n");
-        return -1;
-    }
-    if (cfg->csr_file == NULL || cfg->csr_file[0] == '\0') {
-        fprintf(stderr, "Missing csr_file in config\n");
-        return -1;
-    }
-    if (cfg->cert_file == NULL || cfg->cert_file[0] == '\0') {
-        fprintf(stderr, "Missing cert_file in config\n");
         return -1;
     }
     if (cfg->userid == NULL || cfg->userid[0] == '\0') {

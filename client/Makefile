@@ -1,4 +1,4 @@
-CC ?= cc
+CC = gcc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
 
 OPENSSL_CFLAGS := $(shell pkg-config --cflags openssl 2>/dev/null)

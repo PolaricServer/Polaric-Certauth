@@ -20,6 +20,8 @@
 #include <unistd.h>
 
 
+#define CONFIG_PATH "/etc/polaric-certauth/client.ini"
+
 
 typedef struct {
     char *data;
@@ -375,29 +377,27 @@ cleanup:
 
 int main(int argc, char **argv) {
     Config cfg;
-    const char *config_path = "certclient.ini";
     Buffer csr = {0};
     Buffer cert = {0};
     unsigned char *key = NULL;
     size_t key_len = 0;
     int ret = EXIT_FAILURE;
 
-    if (argc > 2) {
-        fprintf(stderr, "Usage: %s [config-file]\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s csr-path output-path\n", argv[0]);
         return EXIT_FAILURE;
     }
-    if (argc == 2) 
-        config_path = argv[1];
-    
+    char* csr_file = argv[1];
+    char* cert_file = argv[2];
 
     if (config_init(&cfg) != 0 ||
-        parse_config_file(config_path, &cfg) != 0 ||
+        parse_config_file(CONFIG_PATH, &cfg) != 0 ||
         validate_config(&cfg) != 0) {
         goto cleanup;
     }
 
-    if (read_file(cfg.csr_file, &csr) != 0) {
-        fprintf(stderr, "Failed to read CSR file %s\n", cfg.csr_file);
+    if (read_file(csr_file, &csr) != 0) {
+        fprintf(stderr, "Failed to read CSR file %s\n", csr_file);
         goto cleanup;
     }
     if (validate_csr_pem(csr.data, csr.len) != 0) 
@@ -420,11 +420,11 @@ int main(int argc, char **argv) {
     if (validate_cert_pem(cert.data, cert.len) != 0) 
         goto cleanup_curl;
 
-    if (write_file(cfg.cert_file, cert.data, cert.len) != 0) 
+    if (write_file(cert_file, cert.data, cert.len) != 0) 
         goto cleanup_curl;
     
 
-    printf("Certificate written to %s\n", cfg.cert_file);
+    printf("Certificate written to %s\n", cert_file);
     ret = EXIT_SUCCESS;
 
 cleanup_curl:

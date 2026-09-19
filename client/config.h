@@ -4,8 +4,6 @@
 typedef struct {
     char *service_url;
     char *sign_path;
-    char *csr_file;
-    char *cert_file;
     char *userid;
     char *shared_secret;
     char *role;

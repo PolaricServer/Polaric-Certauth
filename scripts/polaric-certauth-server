@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+   INIFILE=/etc/polaric-certauth/server.ini
+
+      JLIB=/usr/share/java
+      PLIB=/usr/share/polaric-certauth/java
+
+ CLASSPATH="$JLIB/polaric-certauth.jar:$PLIB/*"
+     LOGDIR=/var/log/polaric
+    CONFDIR=/etc/polaric-certauth
+    DATADIR=/var/lib/polaric/certauth  
+    LOGFILE=$LOGDIR/certauth.log
+    INIFILE=$CONFDIR/server.ini
+
+       JAVA=/usr/bin/java
+       
+exec $JAVA -classpath $CLASSPATH no.polaric.cert.Main $INIFILE >> $LOGFILE 2>&1 

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+   INIFILE=/etc/polaric-certauth/server.ini
+
+      JLIB=/usr/share/java
+      PLIB=/usr/share/polaric-certauth/java
+
+ CLASSPATH="$JLIB/polaric-certauth.jar:$PLIB/*"
+     LOGDIR=/var/log/polaric
+    CONFDIR=/etc/polaric-certauth
+    DATADIR=/var/lib/polaric/certauth  
+    LOGFILE=$LOGDIR/certauth.log
+    INIFILE=$CONFDIR/server.ini
+
+       JAVA=/usr/bin/java
+
+       
+# Check if effective user ID is not 0 (root)
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Error: You must run this program as root." >&2
+  exit 1
+fi
+
+umask 077
+exec su -s /bin/bash polaric -c "exec $JAVA -classpath $CLASSPATH no.polaric.cert.CaShell $INIFILE" 

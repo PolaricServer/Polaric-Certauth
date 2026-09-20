@@ -185,7 +185,7 @@ public class CaShell {
 
     private static void printHelp() {
         System.out.println("Available Commands:");
-        System.out.println("  ca-create       - Generates a new P-256 EC Root CA certificate.");
+        System.out.println("  ca-create       - Generates a new P-384 EC Root CA certificate.");
         System.out.println("  ca-pem          - Displays the public CA certificate string.");
         System.out.println("  ca-details      - Inspects and lists human-readable properties of the CA.");
         System.out.println("  sign            - Read a CSR from the terminal and sign it");

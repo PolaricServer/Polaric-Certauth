@@ -1,0 +1,4 @@
+target/lib/*.jar usr/share/polaric-certauth/java
+scripts/polaric-certauth-server usr/bin
+scripts/polaric-certauth-ca-shell usr/bin
+conf/server.ini etc/polaric-certauth

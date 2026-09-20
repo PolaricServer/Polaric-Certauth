@@ -1,0 +1,28 @@
+[Unit]
+Description=Polaric CertAuth - Certification Authority server
+Documentation=
+After=network.target
+
+[Service]
+Type=simple
+User=polaric
+Group=polaric
+ExecStart=/usr/bin/polaric-certauth-server
+Restart=on-failure
+# Give aprsd more time to stop cleanly before systemd kills it.
+TimeoutStopSec=60
+# Optional: make systemd wait a little before attempting restarts started by its own
+RestartSec=10
+
+# Security hardening options
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/log/polaric /var/lib/polaric/certauth /etc/polaric-certauth
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

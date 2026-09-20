@@ -1,0 +1,4 @@
+var/lib/polaric/certauth
+etc/polaric-certauth
+etc/polaric-certauth
+usr/share/java

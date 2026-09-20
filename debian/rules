@@ -22,6 +22,7 @@ override_dh_auto_install:
 	install -D -m 0755 client/certclient debian/polaric-certauth-client/usr/bin/certclient
 	install -D -m 0644 debian/client.ini debian/polaric-certauth-client/etc/polaric-certauth/client.ini
 
+	
 override_dh_auto_test:
 
 

@@ -12,8 +12,7 @@ import java.security.cert.X509Certificate;
 
 
 /**
- * Simple example of a RESTful API. 
- * See also the Javalin documentation. 
+ * RESTful API. 
  */
  
 public class CertApi extends ServerBase {

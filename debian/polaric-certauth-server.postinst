@@ -7,7 +7,16 @@ case "$1" in
 
     configure|reconfigure)
         if [ "$1" == "configure" ] ; then
-           chown polaric:polaric /var/lib/polaric/certauth
+        
+            if ! id polaric > /dev/null 2>&1 ; then
+               adduser --quiet --system --home /var/lib/polaric --no-create-home \
+                   --group --disabled-password --shell /bin/false \
+                   polaric
+               usermod -G dialout polaric
+           fi
+           
+           chown polaric:adm /var/log/polaric
+           chown polaric:adm /var/lib/polaric/certauth
            chmod 700 /var/lib/polaric/certauth
         fi
     ;;

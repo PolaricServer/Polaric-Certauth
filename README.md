@@ -65,7 +65,7 @@ dpkg-buildpackage -us -uc -b
 ```
 
 The server package installs the Java application and helper shell together
-with `/etc/polaric-certauth/server.ini`.
+with `/etc/polaric-certauth/server.ini`. It installs two wrapper commands: `polaric-certauth-ca-shell` (command shell). `polaric-certauth-server` which is called by the system to start the server. 
 
 The client package installs a wrapper command named
 `polaric-certauth-client` together with `/etc/polaric-certauth/client.ini`.

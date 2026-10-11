@@ -40,7 +40,7 @@ The configuration file supports:
 - `csr_file`, `cert_file`
 - `userid`
 - `shared_secret`
-- optional `days`, authorization `role`, `ca_file`, and `insecure_tls`
+- optional `days` 
 
 ## Debian packaging
 

@@ -354,9 +354,6 @@ static int request_certificate(const Config *cfg,
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     if (status != 200) {
         fprintf(stderr, "Certificate request failed with HTTP %ld\n", status);
-        if (response->data != NULL && response->len > 0) {
-            fprintf(stderr, "%s\n", response->data);
-        }
         goto cleanup;
     }
 

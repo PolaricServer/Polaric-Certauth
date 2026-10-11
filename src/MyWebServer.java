@@ -26,11 +26,20 @@ public class MyWebServer extends WebServer {
     
     public MyWebServer(ServerConfig conf, int port) {
         super(conf, port, "notify", null, null );
+        disableUserLogin();
     }
-    public void start() {
-        super.start(); 
+    
+    
+    @Override
+    protected void setupRoutes() {
+        /* Start REST API */
         CertApi a1 = new CertApi(_conf);
         a1.start();
+    }
+    
+    
+    public void start() {
+        super.start(); 
         
         /* 
          * Handlers for login and logout. Here we just print message. 

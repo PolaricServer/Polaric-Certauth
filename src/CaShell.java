@@ -28,7 +28,7 @@ public class CaShell {
         Main conf = new Main();
         conf.settings(args);
         Scanner scanner = new Scanner(System.in);
-
+        System.out.println();
         System.out.println("==========================================");
         System.out.println("   Polaric CA Management System CLI");
         System.out.println("==========================================");

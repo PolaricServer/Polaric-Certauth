@@ -20,7 +20,7 @@ The PUT operation requires a device HMAC authentication using a shared secret. I
 ## C client
 
 A simple C client is available in `client/`.
-It is intended to build and run on Linux.
+It is intended to build and run on Linux. The polaric-webapp2 can use this if it is installed and correctly configured. 
 
 Build it with:
 

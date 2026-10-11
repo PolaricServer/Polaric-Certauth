@@ -1,12 +1,21 @@
 ## Minimal CA REST service. 
 
-For IoT devices like the *Arctic Tracker* or *Polaric Server* instances to be run on mobile LANs and accessed by a web-application or smartphone app. 
+For IoT devices like the *Arctic Tracker* or *Polaric Server* instances to be run on (possibly mobile) LANs and accessed by web-applications or smartphone apps. 
 
-A device like the Arctic Tracker generates its own certificate. Possibly using the DNS extension to add a *.local* (mDNS) name. By default the certificate is self-signed, but then clients using a web-browser to access devices, must (manually) add an exception to the browser's security policy. In addition, this method does not necessarily work with a smartphone app. 
+A device like the Arctic Tracker generates its own certificate. It may also be using the DNS extension to add a *.local* (mDNS) name. By default the certificate is self-signed, but then clients using a web-browser to access devices, must (manually) add an exception to the browser's security policy each time there is a new certificate. In addition, this method does not necessarily work with a smartphone app. 
  
-The solution is that the device generate a CSR and send it to a REST-API on a CA-server to have it signed. This process *should* require some authentication to verify that the device requesting the certificate is legitimate. The CA certificate (used for signing) may be installed in the browser or the smartphone app so they can verify certificates from the devices. 
- 
-It is still a bit work-in-progress. 
+The solution is that the device generate a CSR and send it to a REST-API on a CA-server to have it signed. We use a REST API which *should* require some authentication to verify that the device requesting the certificate is legitimate. The CA-certificate (used for signing) may be installed in browsers or smartphone apps so they can verify certificates from the devices. 
+
+## Server and CLI for signing
+
+A server is implemented in Java, using the polaric-core framework. A simple command-line interface allows (1) creating a CA certificae, (2) show the PEM representation of the CA-certificate, (3) show the details of the CA-certificate, (4) issue a certificate (sign) based on a CSR. 
+
+The REST API offer two endpoints
+* GET /cacert - return a PEM representation of the CA-certificate
+* PUT /cacert - take a CSR as input (PEM-format) and return a signed certificate (PEM-format)
+
+The PUT operation requires a device HMAC authentication using a shared secret. It currently doesn't support user-logins. 
+
 
 ## C client
 

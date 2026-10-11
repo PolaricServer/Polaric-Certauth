@@ -11,8 +11,8 @@ The solution is that the device generate a CSR and send it to a REST-API on a CA
 A server is implemented in Java, using the polaric-core framework. A simple command-line interface allows (1) creating a CA certificate, (2) show the PEM representation of the CA-certificate, (3) show the details of the CA-certificate, (4) issue a certificate (sign) based on a CSR. 
 
 The REST API offer two endpoints
-* GET /cacert - return a PEM representation of the CA-certificate
-* PUT /cacert - take a CSR as input (PEM-format) and return a signed certificate (PEM-format)
+* `GET /cacert` - return a PEM representation of the CA-certificate
+* `PUT /cacert/sign` - take a CSR as input (PEM-format) and return a signed certificate (PEM-format)
 
 The PUT operation requires a device HMAC authentication using a shared secret. It currently doesn't support user-logins. 
 

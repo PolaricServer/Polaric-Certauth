@@ -4,7 +4,7 @@ For IoT devices like the *Arctic Tracker* or *Polaric Server* instances to be ru
 
 A device like the Arctic Tracker generates its own certificate. It may also be using the DNS extension to add a *.local* (mDNS) name. By default the certificate is self-signed, but then clients using a web-browser to access devices, must (manually) add an exception to the browser's security policy each time there is a new certificate. In addition, this method does not necessarily work with a smartphone app. 
  
-The solution is that the device generate a CSR and send it to a REST-API on a CA-server to have it signed. We use a REST API which *should* require some authentication to verify that the device requesting the certificate is legitimate. The CA-certificate (used for signing) may be installed in browsers or smartphone apps so they can verify certificates from the devices. 
+The solution is that the device generates a CSR and sends it to a REST-API on a CA-server to have it signed. We use a REST API which *should* require some authentication to verify that the device requesting the certificate is legitimate. The CA-certificate (used for signing) may be installed in browsers or smartphone apps so they can verify certificates from the devices. 
 
 ## Server and CLI for signing
 
@@ -14,7 +14,7 @@ The REST API offer two endpoints
 * `GET /cacert` - return a PEM representation of the CA-certificate
 * `PUT /cacert/sign` - take a CSR as input (PEM-format) and return a signed certificate (PEM-format)
 
-The PUT operation requires a device HMAC authentication using a shared secret. It currently doesn't support user-logins. 
+The PUT operation requires a device HMAC-authentication using a shared secret. It currently doesn't support user-logins. 
 
 
 ## C client
